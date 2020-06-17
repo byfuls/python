@@ -8,9 +8,11 @@ server.bind(('localhost', 50000))
 server.listen(5)
 
 print(f'[sample] 2')
-multiplexingReader = sampleTest.multiSelect(server)
+multiplexingReaderSelect = sampleTest.multiSelect(server)
+multiplexingReaderPoll = sampleTest.multiPoll(server)
 while True:
-    ret = multiplexingReader.readRunning(True)
+    #ret = multiplexingReaderSelect.readRunning(True)
+    ret = multiplexingReaderPoll.readRunning(True)
     print(f'[sample] ret: {ret}')
     if ret[0] is sampleTest.EXCEPTIONAL_EVENT:
         break
