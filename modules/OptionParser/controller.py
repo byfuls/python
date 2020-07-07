@@ -10,7 +10,7 @@ class controller:
 	-u, --up [serial no.] : launch process
 	-d, --down [serial no.] : kill process
 	-w, --watch [serial no.] : watch gateway(=serial) '''	
-	SIZE = 1024
+	SIZE = 102400
 
 	def __init__(self, ip, port, DEBUG=False):
 		self.__serverAddr = (ip, port)
@@ -107,18 +107,25 @@ class controller:
 		pkl_data = pickle.loads(rcv)
 		if self.__debug: print(f'pkl data: {pkl_data}')
 
+		print(f'[DEBUG] count:{len(pkl_data)}')
+
 		for gwobj in pkl_data:
-			print('―――――――――――――――――――――――――――――――')
-			print('%-10s : %.04s' %("serial no", gwobj['serial-no']))
-			print('%-10s : %.20s' %("command", gwobj['command']))
-			print('%-10s : %.04s' %("pid", gwobj['pid']))
-			print('%-10s : %.24s' %("uptime", gwobj['uptime']))
-			print('%-10s : %.24s' %("upcount", gwobj['upcount']))
-			print('%-10s : %.20s' %("vender-id", gwobj['vender-id']))
-			print('%-10s : %.20s' %("product-id", gwobj['product-id']))
-			print('%-10s : %.20s' %("state", gwobj['switch']))
-			print('%-10s : %.20s' %("online", gwobj['online']))
-			print('―――――――――――――――――――――――――――――――')
+			print('――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――')
+			print('%-15s : %.04s' %("serial no", gwobj['serial-no']))
+			print('%-15s : %.10s' %("unique id", gwobj['unique-id']))
+			print('%-15s : %.150s' %("virt_command", gwobj['virt_command']))
+			print('%-15s : %.24s' %("virt_pid", gwobj['virt_pid']))
+			print('%-15s : %.24s' %("virt_uptime", gwobj['virt_uptime']))
+			print('%-15s : %.24s' %("virt_upcount", gwobj['virt_upcount']))
+			print('%-15s : %.150s' %("gw_command", gwobj['gw_command']))
+			print('%-15s : %.24s' %("gw_pid", gwobj['gw_pid']))
+			print('%-15s : %.24s' %("gw_uptime", gwobj['gw_uptime']))
+			print('%-15s : %.24s' %("gw_upcount", gwobj['gw_upcount']))
+			print('%-15s : %.20s' %("vender-id", gwobj['vender-id']))
+			print('%-15s : %.20s' %("product-id", gwobj['product-id']))
+			print('%-15s : %.20s' %("state", gwobj['switch']))
+			print('%-15s : %.20s' %("online", gwobj['online']))
+			print('――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――')
 
 	def switch(self, serial, onoff):
 		if self.__debug: print(f'[switch] serial:{serial} onoff:{onoff}')
