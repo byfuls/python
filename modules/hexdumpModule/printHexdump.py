@@ -32,9 +32,12 @@ def print_hex_dump(buffer, start_offset=0):
  
     print('-' * 79)
 
-def return_hex_dump(buffer, start_offset=0):
+def return_hex_dump(buffer, titleMsg=None, start_offset=0):
     ret = '-' * 79
     ret += '\n'
+    if titleMsg is not None:
+        ret += titleMsg
+        ret += '\n'
 
     offset = 0
     while offset < len(buffer):
@@ -70,8 +73,8 @@ def return_hex_dump(buffer, start_offset=0):
     ret += ('-' * 79)
     return ret
 
-
 if __name__ == "__main__":
     sample = bytearray('12341234123412341234123400000000000000'.encode())
     print_hex_dump(sample)
     print(return_hex_dump(sample))
+    print(return_hex_dump(sample, 'sample title message'))
