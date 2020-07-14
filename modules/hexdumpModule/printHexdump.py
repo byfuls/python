@@ -32,5 +32,46 @@ def print_hex_dump(buffer, start_offset=0):
  
     print('-' * 79)
 
-sample = bytearray('1234'.encode())
-print_hex_dump(sample)
+def return_hex_dump(buffer, start_offset=0):
+    ret = '-' * 79
+    ret += '\n'
+
+    offset = 0
+    while offset < len(buffer):
+        # Offset
+        ret += (' %08X : ' % (offset + start_offset))
+
+        if ((len(buffer) - offset) < 0x10) is True:
+            data = buffer[offset:]
+        else:
+            data = buffer[offset:offset + 0x10]
+
+        # Hex Dump
+        for hex_dump in data:
+            ret += ("%02X" % hex_dump)
+            ret += ' '
+
+        if ((len(buffer) - offset) < 0x10) is True:
+            ret += (' ' * (3 * (0x10 - len(data))))
+
+        ret += ('  ')
+
+        # Ascii
+        for ascii_dump in data:
+            if ((ascii_dump >= 0x20) is True) and ((ascii_dump <= 0x7E) is True):
+                ret += (chr(ascii_dump))
+            else:
+                ret += ('.')
+        ret += '\n'
+
+        offset = offset + len(data)
+        ret += ('')
+
+    ret += ('-' * 79)
+    return ret
+
+
+if __name__ == "__main__":
+    sample = bytearray('12341234123412341234123400000000000000'.encode())
+    print_hex_dump(sample)
+    print(return_hex_dump(sample))
