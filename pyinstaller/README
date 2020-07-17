@@ -1,0 +1,10 @@
+pyinstaller -w -F [dest-python-file].py -n [output-binary-execute-file]
+
+o how to recompile the bootloader of Pyinstaller
+ # git clone https://github.com/pyinstaller/pyinstaller
+ # cd pyinstaller, then cd bootloader
+ # Run “python3 ./waf distclean all” to build the bootloader for your system.
+ # Once the bootloader has been built, type in: “python3 setup.py install”
+ # This should have installed pyinstaller. Type pyinstaller in the terminal and hit enter. It should recognize the command, but it will complain about more arguments
+ # Use the command "pyinstaller yourfile.py" to create your executable.
+
