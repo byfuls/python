@@ -4,6 +4,7 @@ import janus
 import time
 import nest_asyncio
 import socket
+import select
 
 '''
 -> putter -> s_thread ->
@@ -23,16 +24,24 @@ class udpTunnel(threading.Thread):
 	def run(self):
 		self.__loop.run_until_complete(self.launcher())
 
-	def t_close(self):
-		self.__o_sender.stop()
-		self.__o_receiver.stop()
+	async def t_close(self):
+		print('[udpTunnel/t_close] start')
+		self.__o_flag = False
+
+		await self.__put_to_sender_que.async_q.put('drop')
+		self.__o_sender.join()
+		print('[udpTunnel/t_close] sender thread closed')
+		self.__o_receiver.join()
+		print('[udpTunnel/t_close] receiver thread closed')
+		print('[udpTunnel/t_close] end')
 
 	def t_start(self, ip, port):
 		addr = (ip, port)
-		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		self.__sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-		self.__o_sender = threading.Thread(target=self.t_sender, args=(self.__put_to_sender_que, sock, addr))
-		self.__o_receiver = threading.Thread(target=self.t_receiver, args=(self.__get_from_receiver_que, sock))
+		self.__o_flag = True
+		self.__o_sender = threading.Thread(target=self.t_sender, args=(self.__put_to_sender_que,  addr))
+		self.__o_receiver = threading.Thread(target=self.t_receiver, args=(self.__get_from_receiver_que, ))
 		self.__o_sender.start()
 		self.__o_receiver.start()
 
@@ -43,11 +52,6 @@ class udpTunnel(threading.Thread):
 
 		put_to_sender_coro = self.a_put_to_sender(self.__get_from_outer_que, self.__put_to_sender_que)
 		get_from_receiver_coro = self.a_get_from_receiver(self.__get_from_receiver_que)
-
-		#self.__o_sender = threading.Thread(target=self.t_sender, args=(self.__put_to_sender_que,))
-		#self.__o_receiver = threading.Thread(target=self.t_receiver, args=(self.__get_from_receiver_que,))
-		#self.__o_sender.start()
-		#self.__o_receiver.start()
 
 		return await asyncio.gather(put_to_sender_coro, get_from_receiver_coro)
 
@@ -69,23 +73,43 @@ class udpTunnel(threading.Thread):
 			print(f'[get_from_receiver] get data: {data}')
 		print('[get_from_receiver] end')
 
-	def t_sender(self, put_to_sender_que, sock, addr):
+	def t_sender(self, put_to_sender_que, addr):
+		time.sleep(1)
 		print('[sender] start')
-		while True:
+		while self.__o_flag:
 			print('[sender] ...')
 			data = put_to_sender_que.sync_q.get()
+			print('[sender] get') 
 			print(f'[sender] get data: {data}')
 
-			sock.sendto(data.encode('utf-8'), addr)
+			if 'drop' == data:
+				self.__sock.close()
+				return
+
+			self.__sock.sendto(data.encode('utf-8'), addr)
 		print('[sender] end')
 
-	def t_receiver(self, get_from_receiver_que, sock):
+	def t_receiver(self, get_from_receiver_que):
+		time.sleep(1)
 		print('[receiver] start')
-		while True:
+
+		inputs = list()
+		inputs.append(self.__sock)
+		outputs = list()
+		timeout = 1
+
+		while self.__o_flag:
 			print('[receiver] ...')
-			data, server = sock.recvfrom(4096)
-			print(f'[receiver] get data: {data}')
-			get_from_receiver_que.sync_q.put(data)
+			readable, writable, exceptional = \
+				select.select(inputs, outputs, inputs, timeout)
+			for s in readable:
+				if s == self.__sock:
+					data, server = self.__sock.recvfrom(4096)
+					print('[receiver] get') 
+					print(f'[receiver] get data: {data}')
+					get_from_receiver_que.sync_q.put(data)
+			for s in exceptional:
+				print('[receiver] socket err')
 		print('[receiver] end')
 
 	async def input(self, data):
@@ -99,8 +123,17 @@ if __name__ == '__main__':
 			try:
 				print('[main_run] start')
 				while True:
-					await asyncio.sleep(1)
+					print('[main_run] ...')
+					await asyncio.sleep(2)
 					await tunnel.input('hi')
+
+					await asyncio.sleep(5)
+					print('shutdown tunnel communicator - start')
+					await tunnel.t_close()
+					print('shutdown tunnel communicator - end')
+
+					await asyncio.sleep(5)
+					tunnel.t_start('127.0.0.1', 5001)
 				print('[main_run] end')
 			except asyncio.CancelledError:
 				print('[main_run] cancelled')
@@ -112,9 +145,6 @@ if __name__ == '__main__':
 			tunnel = udpTunnel()
 			tunnel.t_start('127.0.0.1', 5001)
 			task = asyncio.create_task(main_run(tunnel))
-
-			#await asyncio.sleep(1)
-			#task.cancel()
 
 			await task
 
