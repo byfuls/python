@@ -12,9 +12,10 @@ import select
 '''
 
 class udpTunnel(threading.Thread):
-	def __init__(self):
+	def __init__(self, debug=False):
 		super(udpTunnel,self).__init__()
 		self.__loop = asyncio.get_event_loop()
+		self.__debugging = debug
 		nest_asyncio.apply(self.__loop)
 		self.start()
 
@@ -25,15 +26,15 @@ class udpTunnel(threading.Thread):
 		self.__loop.run_until_complete(self.launcher())
 
 	async def t_close(self):
-		print('[udpTunnel/t_close] start')
+		if self.__debugging == True: print('[udpTunnel/t_close] start')
 		self.__o_flag = False
 
 		await self.__put_to_sender_que.async_q.put('drop')
 		self.__o_sender.join()
-		print('[udpTunnel/t_close] sender thread closed')
+		if self.__debugging == True: print('[udpTunnel/t_close] sender thread closed')
 		self.__o_receiver.join()
-		print('[udpTunnel/t_close] receiver thread closed')
-		print('[udpTunnel/t_close] end')
+		if self.__debugging == True: print('[udpTunnel/t_close] receiver thread closed')
+		if self.__debugging == True: print('[udpTunnel/t_close] end')
 
 	def t_start(self, ip, port):
 		addr = (ip, port)
@@ -56,42 +57,42 @@ class udpTunnel(threading.Thread):
 		return await asyncio.gather(put_to_sender_coro, get_from_receiver_coro)
 
 	async def a_put_to_sender(self, get_from_outer_que, put_to_sender_que):
-		print('[put_to_sender] start')
+		if self.__debugging == True: print('[put_to_sender] start')
 		while True:
-			print('[put_to_sender] ...')
+			if self.__debugging == True: print('[put_to_sender] ...')
 			data = await get_from_outer_que.get()
-			print(f'[put_to_sender] get from outer que, data: {data}')
+			if self.__debugging == True: print(f'[put_to_sender] get from outer que, data: {data}')
 			await put_to_sender_que.async_q.put(data)
-			print(f'[put_to_sender] put to sender que, data: {data}')
-		print('[put_to_sender] end')
+			if self.__debugging == True: print(f'[put_to_sender] put to sender que, data: {data}')
+		if self.__debugging == True: print('[put_to_sender] end')
 
 	async def a_get_from_receiver(self, get_from_receiver_que):
-		print('[get_from_receiver] start')
+		if self.__debugging == True: print('[get_from_receiver] start')
 		while True:
-			print('[get_from_receiver] ...')
+			if self.__debugging == True: print('[get_from_receiver] ...')
 			data = await get_from_receiver_que.async_q.get()
-			print(f'[get_from_receiver] get data: {data}')
-		print('[get_from_receiver] end')
+			if self.__debugging == True: print(f'[get_from_receiver] get data: {data}')
+		if self.__debugging == True: print('[get_from_receiver] end')
 
 	def t_sender(self, put_to_sender_que, addr):
 		time.sleep(1)
-		print('[sender] start')
+		if self.__debugging == True: print('[sender] start')
 		while self.__o_flag:
-			print('[sender] ...')
+			if self.__debugging == True: print('[sender] ...')
 			data = put_to_sender_que.sync_q.get()
-			print('[sender] get') 
-			print(f'[sender] get data: {data}')
+			if self.__debugging == True: print('[sender] get') 
+			if self.__debugging == True: print(f'[sender] get data: {data}')
 
 			if 'drop' == data:
 				self.__sock.close()
-				return
+				break
 
 			self.__sock.sendto(data.encode('utf-8'), addr)
-		print('[sender] end')
+		if self.__debugging == True: print('[sender] end')
 
 	def t_receiver(self, get_from_receiver_que):
 		time.sleep(1)
-		print('[receiver] start')
+		if self.__debugging == True: print('[receiver] start')
 
 		inputs = list()
 		inputs.append(self.__sock)
@@ -99,23 +100,24 @@ class udpTunnel(threading.Thread):
 		timeout = 1
 
 		while self.__o_flag:
-			print('[receiver] ...')
+			if self.__debugging == True: print('[receiver] ...')
 			readable, writable, exceptional = \
 				select.select(inputs, outputs, inputs, timeout)
 			for s in readable:
 				if s == self.__sock:
 					data, server = self.__sock.recvfrom(4096)
-					print('[receiver] get') 
-					print(f'[receiver] get data: {data}')
+					if self.__debugging == True: print('[receiver] get') 
+					if self.__debugging == True: print(f'[receiver] get data: {data}')
 					get_from_receiver_que.sync_q.put(data)
 			for s in exceptional:
-				print('[receiver] socket err')
-		print('[receiver] end')
+				if self.__debugging == True: print('[receiver] socket err')
+				break
+		if self.__debugging == True: print('[receiver] end')
 
 	async def input(self, data):
-		print('[input] start')
+		if self.__debugging == True: print('[input] start')
 		await self.__get_from_outer_que.put(data)
-		print('[input] end')
+		if self.__debugging == True: print('[input] end')
 
 if __name__ == '__main__':
 	try:
@@ -142,7 +144,7 @@ if __name__ == '__main__':
 				print('[main_run] done')
 			
 		async def main():
-			tunnel = udpTunnel()
+			tunnel = udpTunnel(debug=True)
 			tunnel.t_start('127.0.0.1', 5001)
 			task = asyncio.create_task(main_run(tunnel))
 
