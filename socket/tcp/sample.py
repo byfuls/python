@@ -4,7 +4,7 @@ import socket
 print(f'[sample] 1')
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setblocking(0)
-server.bind(('localhost', 50000))
+server.bind(('192.168.242.131', 3001))
 server.listen(5)
 
 print(f'[sample] 2')
