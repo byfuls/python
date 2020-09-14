@@ -14,3 +14,17 @@ student_objects = [
 ]
 ret = sorted(student_objects, key=lambda test: test.age)
 print(ret)
+
+###############################################################
+
+from operator import itemgetter, attrgetter
+ret = sorted(student_objects, key=attrgetter('age'))
+print(ret)
+
+ret = sorted(student_objects, key=attrgetter('grade', 'age'))
+print(ret)
+
+###############################################################
+
+ret = sorted(student_objects, key=attrgetter('age'), reverse=True)
+print(ret)
