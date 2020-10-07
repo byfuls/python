@@ -10,6 +10,14 @@ class PacketFormating:
 	def packet(self):
 		return self.__packet
 	@property
+	def len(self):
+		return self.__offset
+
+	def clear(self):
+		self.__packet = bytearray(self.__headerSize)
+		self.__offset = 0
+
+	@property
 	def totalLength(self):
 		return None
 	@totalLength.setter
@@ -74,3 +82,17 @@ if __name__ == "__main__":
 	print(t.packet)
 	t.pkdata = b'\x01\x02\x03'
 	print(t.packet)
+	print(t.len)
+	t.pkdata = b'\x04\x05\x06'
+	print(t.packet)
+	print(t.len)
+
+	t.clear()
+	print(t.packet)
+	print(t.len)
+	t.pkdata = b'\x01\x02\x03'
+	print(t.packet)
+	print(t.len)
+	t.pkdata = b'\x04\x05\x06'
+	print(t.packet)
+	print(t.len)
