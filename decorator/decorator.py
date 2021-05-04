@@ -15,11 +15,11 @@ def add_ints_2(a, b):
     return a+b
 
 print(f'Decorated function call:', add_ints_2(3,4))
+#
+## decorator-1
+#def add_ints(a, b):
+#    return a+b
+#print(f'Original function call:', add_ints(1,2))
 
-# decorator-1
-def add_ints(a, b):
-    return a+b
-print(f'Original function call:', add_ints(1,2))
-
-cooler_add_ints = document_it(add_ints)
-print(f'Decorated function call:', cooler_add_ints(1,2))
+#cooler_add_ints = document_it(add_ints)
+#print(f'Decorated function call:', cooler_add_ints(1,2))
