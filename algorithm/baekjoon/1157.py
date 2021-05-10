@@ -1,4 +1,3 @@
-
 inputData = input().upper()
 searchKeys = list(set(inputData))
 
